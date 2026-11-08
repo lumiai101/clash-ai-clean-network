@@ -1,0 +1,63 @@
+# Mihomo (Clash.Meta) Clean Network Configuration Snippet
+
+dns:
+  enable: true
+  listen: 0.0.0.0:1053
+  ipv6: false
+  enhanced-mode: fake-ip
+  fake-ip-range: 198.18.0.1/16
+  fake-ip-filter:
+    - '*.lan'
+    - '+.stun.*'
+  nameserver:
+    - 223.5.5.5
+    - 119.29.29.29
+  fallback:
+    - 'https://1.1.1.1/dns-query'
+  fallback-filter:
+    geoip: true
+    geoip-code: CN
+    ipcidr:
+      - 240.0.0.0/4
+  nameserver-policy:
+    '+.net.coffee': 'https://1.1.1.1/dns-query'
+    '+.d.ip.net.coffee': 'https://1.1.1.1/dns-query'
+    '+.browserleaks.com': 'https://1.1.1.1/dns-query'
+    '+.anthropic.com': 'https://1.1.1.1/dns-query'
+    '+.claude.ai': 'https://1.1.1.1/dns-query'
+    '+.openai.com': 'https://1.1.1.1/dns-query'
+    '+.chatgpt.com': 'https://1.1.1.1/dns-query'
+
+tun:
+  enable: true
+  stack: mixed
+  dns-hijack:
+    - 'any:53'
+    - 'tcp://any:53'
+  auto-route: true
+  auto-detect-interface: true
+  strict-route: true
+
+rules:
+  # 国内探针走 DIRECT
+  - DOMAIN-SUFFIX,ip138.com,DIRECT
+  - DOMAIN-SUFFIX,ip.cn,DIRECT
+
+  # WebRTC STUN 绑定目标住宅代理组
+  - DOMAIN-KEYWORD,stun,AI固定家宽出口
+  - DOMAIN-SUFFIX,stun.cloudflare.com,AI固定家宽出口
+  - DOMAIN-SUFFIX,stun.l.google.com,AI固定家宽出口
+
+  # 测试平台域名
+  - DOMAIN-SUFFIX,net.coffee,AI固定家宽出口
+  - DOMAIN-KEYWORD,net.coffee,AI固定家宽出口
+
+  # AI 服务域名
+  - DOMAIN-SUFFIX,anthropic.com,AI固定家宽出口
+  - DOMAIN-SUFFIX,claude.ai,AI固定家宽出口
+  - DOMAIN-SUFFIX,openai.com,AI固定家宽出口
+  - DOMAIN-SUFFIX,chatgpt.com,AI固定家宽出口
+
+  - GEOIP,LAN,DIRECT,no-resolve
+  - GEOIP,CN,DIRECT
+  - MATCH,DIRECT
