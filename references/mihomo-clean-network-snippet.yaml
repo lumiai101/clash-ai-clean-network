@@ -1,4 +1,5 @@
 # Mihomo (Clash.Meta) Clean Network Configuration Snippet
+# Claude Code 全域名规则见 references/claude-code-rules.yaml
 
 dns:
   enable: true
@@ -25,8 +26,16 @@ dns:
     '+.browserleaks.com': 'https://1.1.1.1/dns-query'
     '+.anthropic.com': 'https://1.1.1.1/dns-query'
     '+.claude.ai': 'https://1.1.1.1/dns-query'
+    '+.claude.com': 'https://1.1.1.1/dns-query'
+    '+.clau.de': 'https://1.1.1.1/dns-query'
+    '+.claudemcpclient.com': 'https://1.1.1.1/dns-query'
+    '+.claudemcpcontent.com': 'https://1.1.1.1/dns-query'
+    '+.claudeusercontent.com': 'https://1.1.1.1/dns-query'
     '+.openai.com': 'https://1.1.1.1/dns-query'
     '+.chatgpt.com': 'https://1.1.1.1/dns-query'
+
+# TLS 指纹与 Chrome 对齐，降低非浏览器指纹特征
+global-client-fingerprint: chrome
 
 tun:
   enable: true
@@ -52,11 +61,35 @@ rules:
   - DOMAIN-SUFFIX,net.coffee,AI固定家宽出口
   - DOMAIN-KEYWORD,net.coffee,AI固定家宽出口
 
-  # AI 服务域名
+  # Claude Code 全域名（核心 / CDN / 认证 / 遥测 / widget）
   - DOMAIN-SUFFIX,anthropic.com,AI固定家宽出口
   - DOMAIN-SUFFIX,claude.ai,AI固定家宽出口
+  - DOMAIN-SUFFIX,claude.com,AI固定家宽出口
+  - DOMAIN-SUFFIX,clau.de,AI固定家宽出口
+  - DOMAIN-SUFFIX,claudemcpclient.com,AI固定家宽出口
+  - DOMAIN-SUFFIX,claudemcpcontent.com,AI固定家宽出口
+  - DOMAIN-SUFFIX,claudeusercontent.com,AI固定家宽出口
+  - DOMAIN,servd-anthropic-website.b-cdn.net,AI固定家宽出口
+  - DOMAIN,anthropic.com.cdn.cloudflare.net,AI固定家宽出口
+  - DOMAIN,anthropic.auth0.com,AI固定家宽出口
+  - DOMAIN,anthropic-com.ghost.io,AI固定家宽出口
+  - DOMAIN-SUFFIX,sentry.io,AI固定家宽出口
+  - DOMAIN-SUFFIX,statsigapi.net,AI固定家宽出口
+  - DOMAIN,browser-intake-us5-datadoghq.com,AI固定家宽出口
+  - DOMAIN-KEYWORD,datadog,AI固定家宽出口
+  - DOMAIN-SUFFIX,siftscience.com,AI固定家宽出口
+  - DOMAIN-SUFFIX,intercom.io,AI固定家宽出口
+  - DOMAIN-SUFFIX,intercomcdn.com,AI固定家宽出口
+  - DOMAIN,cdn.usefathom.com,AI固定家宽出口
+
+  # OpenAI / ChatGPT
   - DOMAIN-SUFFIX,openai.com,AI固定家宽出口
   - DOMAIN-SUFFIX,chatgpt.com,AI固定家宽出口
+
+  # Anthropic 自有 IP 段 / ASN 兜底
+  - IP-CIDR,160.79.104.0/21,AI固定家宽出口,no-resolve
+  - IP-CIDR6,2607:6bc0::/32,AI固定家宽出口,no-resolve
+  - IP-ASN,399358,AI固定家宽出口,no-resolve
 
   - GEOIP,LAN,DIRECT,no-resolve
   - GEOIP,CN,DIRECT

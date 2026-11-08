@@ -154,16 +154,47 @@ rules:
   # 4. AI 核心业务层：精准覆盖 Anthropic & OpenAI 服务群
   - DOMAIN-SUFFIX,anthropic.com,AI固定家宽出口
   - DOMAIN-SUFFIX,claude.ai,AI固定家宽出口
+  - DOMAIN-SUFFIX,claude.com,AI固定家宽出口
+  - DOMAIN-SUFFIX,clau.de,AI固定家宽出口
+  - DOMAIN-SUFFIX,claudemcpclient.com,AI固定家宽出口
+  - DOMAIN-SUFFIX,claudemcpcontent.com,AI固定家宽出口
+  - DOMAIN-SUFFIX,claudeusercontent.com,AI固定家宽出口
+  - DOMAIN,anthropic.com.cdn.cloudflare.net,AI固定家宽出口
+  - DOMAIN,anthropic.auth0.com,AI固定家宽出口
+  - DOMAIN-SUFFIX,sentry.io,AI固定家宽出口
+  - DOMAIN-SUFFIX,statsigapi.net,AI固定家宽出口
+  - DOMAIN,browser-intake-us5-datadoghq.com,AI固定家宽出口
   - DOMAIN-SUFFIX,openai.com,AI固定家宽出口
   - DOMAIN-SUFFIX,chatgpt.com,AI固定家宽出口
   - DOMAIN-SUFFIX,oaistatic.com,AI固定家宽出口
   - DOMAIN-SUFFIX,oaiusercontent.com,AI固定家宽出口
 
-  # 5. 基础分流与兜底
+  # 5. Anthropic 自有 IP 段 / ASN 兜底（域名失效时的最后防线）
+  - IP-CIDR,160.79.104.0/21,AI固定家宽出口,no-resolve
+  - IP-CIDR6,2607:6bc0::/32,AI固定家宽出口,no-resolve
+  - IP-ASN,399358,AI固定家宽出口,no-resolve
+
+  # 6. 基础分流与兜底
   - GEOIP,LAN,DIRECT,no-resolve
   - GEOIP,CN,DIRECT
   - MATCH,兜底代理
 ```
+
+完整的 Claude Code 域名表（含 CDN、认证、遥测、第三方 widget）与取舍说明见
+[claude-code-rules.yaml](references/claude-code-rules.yaml)。要点：
+
+- Claude Code 不止访问 `claude.ai` 和 `api.anthropic.com`，还会请求 CDN、Auth0 认证、
+  Sentry / Statsig / Datadog 遥测。任何一条漏走，遥测 IP 与主请求 IP 不一致，
+  本身就是风控信号。
+- 遥测域名必须精确匹配：`browser-intake-us5-datadoghq.com` 的根域用连字符，
+  不是 `datadoghq.com` 的子域，后缀规则抓不到。
+- 域名规则之外再叠加 `160.79.104.0/21`（Anthropic 自有 IPv4）、
+  `2607:6bc0::/32`（IPv6）与 `IP-ASN,399358`，覆盖 DNS over HTTPS、ECH/ESNI
+  隐藏 SNI、或客户端使用未知新域名的情况。IP 规则放在域名规则之后。
+- 这些规则必须排在 `geosite:geolocation-!cn` 等通用规则之前，否则会被通用分流
+  截到不同出口，造成同一会话多出口。
+- NTP 不默认代理：时区由系统设置决定而非 NTP；把 NTP 塞进不支持 UDP 的节点会
+  导致 Windows 时间同步失败。需要 `geosite:category-ntp` 时先确认 UDP 出口可用。
 
 ---
 

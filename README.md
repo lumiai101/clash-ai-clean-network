@@ -22,6 +22,18 @@
 - `references/`:
   - `flclash-profile-script.js`: FlClash 订阅配置预处理脚本（自动剔除伪装节点并注入策略）。
   - `mihomo-clean-network-snippet.yaml`: Mihomo (Clash.Meta) 核心配置代码片段（含 DoH 与 rules）。
+  - `claude-code-rules.yaml`: Claude Code 全域名分流规则集（核心 / CDN / 认证 / 遥测 / IP-ASN 兜底）。
+
+## Claude Code 全域名分流（2026-11 更新）
+
+Claude Code 运行时除 `claude.ai`、`api.anthropic.com` 外，还会访问 CDN、Auth0 认证、
+Sentry / Statsig / Datadog 遥测与客服 widget。任何一条漏走代理，上报 IP 就会和主请求
+IP 不一致，这是典型的跨区风控信号。
+
+- 完整域名表与取舍说明：[`references/claude-code-rules.yaml`](references/claude-code-rules.yaml)
+- 规则必须排在 `geosite:geolocation-!cn` 等通用规则之前
+- 再叠加 `IP-CIDR,160.79.104.0/21`、`IP-CIDR6,2607:6bc0::/32`、`IP-ASN,399358` 兜底
+- 客户端同时保持 `ipv6: false`、`dns.ipv6: false`、`global-client-fingerprint: chrome`
 
 ## 快速上手
 

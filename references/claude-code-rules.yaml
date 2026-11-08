@@ -1,0 +1,64 @@
+# Claude Code 完整分流规则集（mihomo / Clash.Meta / FlClash）
+# 来源：https://ip.net.coffee/claude/site.html（域名全表）
+#       https://ip.net.coffee/claude/claudecode.html（11 项稳定配置）
+#       https://ip.net.coffee/claude/identity.html（风控身份验证自查）
+# 用法：把 AI-EGRESS 替换成自己的固定出口策略组名；整段置于 rules 最前面，
+# 优先级高于 geosite:geolocation-!cn 等通用规则，避免被后置规则截走。
+
+rules:
+  # ---------- 1. 核心域名（缺一不可）----------
+  - DOMAIN-SUFFIX,anthropic.com,AI-EGRESS
+  - DOMAIN-SUFFIX,claude.ai,AI-EGRESS
+  - DOMAIN-SUFFIX,claude.com,AI-EGRESS
+  - DOMAIN-SUFFIX,clau.de,AI-EGRESS
+  - DOMAIN-SUFFIX,claudemcpclient.com,AI-EGRESS
+  - DOMAIN-SUFFIX,claudemcpcontent.com,AI-EGRESS
+  - DOMAIN-SUFFIX,claudeusercontent.com,AI-EGRESS
+
+  # ---------- 2. CDN 与静态资源 ----------
+  - DOMAIN,servd-anthropic-website.b-cdn.net,AI-EGRESS
+  - DOMAIN,anthropic.com.cdn.cloudflare.net,AI-EGRESS
+  - DOMAIN-SUFFIX,b-cdn.net,AI-EGRESS
+
+  # ---------- 3. 认证 / 官方内容 ----------
+  - DOMAIN,anthropic.auth0.com,AI-EGRESS
+  - DOMAIN,anthropic-com.ghost.io,AI-EGRESS
+
+  # ---------- 4. 监控与遥测（漏走会与主请求出口不一致）----------
+  - DOMAIN-SUFFIX,sentry.io,AI-EGRESS
+  - DOMAIN-SUFFIX,statsigapi.net,AI-EGRESS
+  - DOMAIN-SUFFIX,statsig.com,AI-EGRESS
+  - DOMAIN,browser-intake-us5-datadoghq.com,AI-EGRESS
+  - DOMAIN-KEYWORD,datadog,AI-EGRESS
+  - DOMAIN-SUFFIX,siftscience.com,AI-EGRESS
+  - DOMAIN-KEYWORD,sift,AI-EGRESS
+
+  # ---------- 5. 客服 / 第三方 widget ----------
+  - DOMAIN-SUFFIX,intercom.io,AI-EGRESS
+  - DOMAIN-SUFFIX,intercomcdn.com,AI-EGRESS
+  - DOMAIN,cdn.usefathom.com,AI-EGRESS
+
+  # ---------- 6. IP 段 / ASN 兜底（域名规则失效时的最后防线）----------
+  - IP-CIDR,160.79.104.0/21,AI-EGRESS,no-resolve
+  - IP-CIDR6,2607:6bc0::/32,AI-EGRESS,no-resolve
+  - IP-ASN,399358,AI-EGRESS,no-resolve
+
+# 说明与取舍
+# - browser-intake-us5-datadoghq.com 必须精确匹配：它的根域用连字符，不是
+#   datadoghq.com 的子域，DOMAIN-SUFFIX,datadoghq.com 抓不到。
+# - DOMAIN-KEYWORD,sift 属于宽匹配兜底；若担心误伤，可只保留 siftscience.com。
+# - IP-ASN 需要客户端工作目录内可用的 ASN.mmdb（FlClash 会自带 ASN.mmdb）；
+#   不支持 ASN 的客户端保留两条 IP-CIDR 也能覆盖 Anthropic 主要流量。
+# - NTP 未直接代理：时区是系统设置，不由 NTP 决定；把 NTP 塞进不支持 UDP 的
+#   节点会导致 Windows 时间同步失败。需要时先验证 UDP 出口再加 geosite:category-ntp。
+
+# DNS 侧配套（nameserver-policy，全部走代理内 DoH）
+# "+.anthropic.com" / "+.claude.ai" / "+.claude.com" / "+.clau.de"
+# "+.claudemcpclient.com" / "+.claudemcpcontent.com" / "+.claudeusercontent.com"
+# "+.sentry.io" / "+.statsigapi.net" / "+.intercom.io" / "+.intercomcdn.com"
+
+# 客户端侧配套（identity.html 的 Type A 风控自查）
+# - ipv6: false 且 dns.ipv6: false，杜绝 AAAA 直连导致双栈出口不一致
+# - global-client-fingerprint: chrome，TLS 指纹与浏览器对齐
+# - 出口固定单一住宅 IP，fraud score < 40，避免节点轮换造成 IP 跳变
+# - 系统时区 / 浏览器语言 / 出口地理位置三者尽量一致
